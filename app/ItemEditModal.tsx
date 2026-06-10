@@ -18,7 +18,6 @@ export default function ItemEditModal({ item, itemIndex, boxPosition, userId, on
   const [text, setText] = useState(item.text)
   const [imageFile, setImageFile] = useState<File | null>(null)
   const [imagePreview, setImagePreview] = useState<string | null>(item.image_url ?? null)
-  const [removePhoto, setRemovePhoto] = useState(false)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const fileRef = useRef<HTMLInputElement>(null)
@@ -29,10 +28,16 @@ export default function ItemEditModal({ item, itemIndex, boxPosition, userId, on
     if (!file) return
     const compressed = await compressImage(file)
     setImageFile(compressed)
-    setRemovePhoto(false)
     const reader = new FileReader()
     reader.onload = ev => setImagePreview(ev.target?.result as string)
     reader.readAsDataURL(compressed)
+  }
+
+  // Smazání fotky se ukládá okamžitě — bez nutnosti potvrzení (jinak se po zavření modalu fotka "vrátí")
+  function handleRemovePhoto() {
+    setImagePreview(null)
+    setImageFile(null)
+    onConfirm({ ...item, text: text.trim() || item.text, image_url: null })
   }
 
   async function handleConfirm() {
@@ -41,7 +46,7 @@ export default function ItemEditModal({ item, itemIndex, boxPosition, userId, on
     setSaving(true)
     setError(null)
     try {
-      let image_url: string | null | undefined = removePhoto ? null : item.image_url
+      let image_url: string | null | undefined = item.image_url
       if (imageFile) {
         const path = `${userId}/items/${boxPosition}-${itemIndex}-${Date.now()}.jpg`
         const { data: upload, error: uploadError } = await supabase.storage
@@ -106,11 +111,11 @@ export default function ItemEditModal({ item, itemIndex, boxPosition, userId, on
             >
               Fotografie
             </label>
-            {imagePreview && !removePhoto ? (
+            {imagePreview ? (
               <div className="mb-2 relative">
                 <img src={imagePreview} alt="náhled" className="w-full h-32 object-cover rounded-lg" style={{ border: '1px solid #333' }} />
                 <button
-                  onClick={() => { setRemovePhoto(true); setImagePreview(null); setImageFile(null) }}
+                  onClick={handleRemovePhoto}
                   className="absolute top-1 right-1 text-white text-xs px-2 py-0.5 rounded"
                   style={{ background: '#8b2020' }}
                 >
@@ -131,7 +136,7 @@ export default function ItemEditModal({ item, itemIndex, boxPosition, userId, on
               className="px-4 py-2 rounded-lg text-sm transition"
               style={{ background: '#1e1e1e', border: '1px solid #444', color: 'var(--text-secondary)' }}
             >
-              📷 {imagePreview && !removePhoto ? 'Změnit fotku' : 'Přidat fotku'}
+              📷 {imagePreview ? 'Změnit fotku' : 'Přidat fotku'}
             </button>
           </div>
 
