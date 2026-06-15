@@ -26,6 +26,7 @@ export default function ShelfClient({ userId, initialBoxes, cols: initCols, rows
   const [showSettings, setShowSettings] = useState(false)
   const [showScanner, setShowScanner] = useState(false)
   const [activeCategory, setActiveCategory] = useState('')
+  const [searchQuery, setSearchQuery] = useState('')
   const router = useRouter()
   const supabase = createClient()
 
@@ -86,9 +87,19 @@ export default function ShelfClient({ userId, initialBoxes, cols: initCols, rows
   }
 
   const visibleBoxes = boxes.filter(b => b.position < cols * rows)
-  const filteredBoxes = activeCategory
-    ? visibleBoxes.filter(b => b.category === activeCategory)
-    : visibleBoxes
+  const q = searchQuery.trim().toLowerCase()
+  const filteredBoxes = q
+    // Hledání jde napříč všemi bednami, ignoruje filtr kategorie
+    ? visibleBoxes.filter(b =>
+        b.id !== null && (
+          (b.title ?? '').toLowerCase().includes(q) ||
+          (b.category ?? '').toLowerCase().includes(q) ||
+          (b.items ?? []).some(it => (it.text ?? '').toLowerCase().includes(q))
+        )
+      )
+    : activeCategory
+      ? visibleBoxes.filter(b => b.category === activeCategory)
+      : visibleBoxes
 
   return (
     <div style={{ minHeight: '100vh', background: 'var(--bg-base)', paddingBottom: 80 }}>
@@ -116,7 +127,32 @@ export default function ShelfClient({ userId, initialBoxes, cols: initCols, rows
         }}>
           ⬡ Digitální Regál
         </h1>
-        {activeCategory && (
+        <div style={{ position: 'relative', flex: '0 0 auto', display: 'flex', alignItems: 'center' }}>
+          <span style={{ position: 'absolute', left: 8, fontSize: 12, color: '#666', pointerEvents: 'none' }}>🔍</span>
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={e => setSearchQuery(e.target.value)}
+            placeholder="Hledat…"
+            style={{
+              background: 'var(--bg-surface)',
+              border: '1px solid var(--border-subtle)',
+              borderRadius: 14,
+              color: 'var(--text-primary)',
+              fontSize: 13,
+              padding: '6px 26px 6px 26px',
+              width: 130,
+              outline: 'none',
+            }}
+          />
+          {searchQuery && (
+            <button
+              onClick={() => setSearchQuery('')}
+              style={{ position: 'absolute', right: 8, color: '#ff6b35', background: 'none', border: 'none', cursor: 'pointer', fontSize: 12, padding: 0, lineHeight: 1 }}
+            >✕</button>
+          )}
+        </div>
+        {!searchQuery && activeCategory && (
           <span style={{
             fontSize: 12,
             color: '#aaa',
@@ -230,6 +266,12 @@ export default function ShelfClient({ userId, initialBoxes, cols: initCols, rows
           )
         })}
       </div>
+
+      {q && filteredBoxes.length === 0 && (
+        <div style={{ textAlign: 'center', color: 'var(--text-muted)', fontSize: 14, padding: '40px 16px' }}>
+          Pro „{searchQuery}" nic nenalezeno
+        </div>
+      )}
 
       {editingBox && (
         <BoxModal box={editingBox} userId={userId} onSave={handleSave} onClose={() => setEditingBox(null)} />
