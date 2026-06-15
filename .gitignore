@@ -43,3 +43,5 @@ next-env.d.ts
 .superpowers/
 .agents/
 supabase/.temp/
+# prazdne placeholdery vzdalenych migraci (jen lokalni CLI stav)
+supabase/migrations/*_remote.sql
