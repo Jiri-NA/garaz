@@ -12,7 +12,6 @@ export type GarazBox = {
   category: string
   items: BoxItem[]
   color: string
-  image_url: string | null
   created_at: string
   updated_at: string
 }

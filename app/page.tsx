@@ -20,7 +20,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ o
     const existing = boxes?.find((b: { position: number }) => b.position === i)
     return existing ?? {
       id: null, user_id: user.id, position: i,
-      title: `Bedna ${i + 1}`, category: '', items: [], color: '#ffffff', image_url: null,
+      title: `Bedna ${i + 1}`, category: '', items: [], color: '#ffffff',
       created_at: '', updated_at: '',
     }
   })

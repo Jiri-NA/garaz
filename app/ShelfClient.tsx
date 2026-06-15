@@ -35,22 +35,10 @@ export default function ShelfClient({ userId, initialBoxes, cols: initCols, rows
     if (box) setEditingBox(box)
   }, [])
 
-  async function handleSave(box: GarazBox, imageFile: File | null) {
-    let image_url = box.image_url
-
-    if (imageFile) {
-      const path = `${userId}/${box.position}-${Date.now()}`
-      const { data: upload, error: uploadError } = await supabase.storage
-        .from('garaz_photos')
-        .upload(path, imageFile, { upsert: true })
-      if (uploadError) throw new Error('Nahrání fotky selhalo: ' + uploadError.message)
-      const { data: { publicUrl } } = supabase.storage.from('garaz_photos').getPublicUrl(upload.path)
-      image_url = publicUrl
-    }
-
+  async function handleSave(box: GarazBox) {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { id, created_at, updated_at, ...rest } = box
-    const payload = { ...rest, image_url, user_id: userId }
+    const payload = { ...rest, user_id: userId }
 
     console.log('[garaz] save payload:', JSON.stringify(payload))
 
@@ -87,7 +75,7 @@ export default function ShelfClient({ userId, initialBoxes, cols: initCols, rows
         const existing = prev.find(b => b.position === i)
         return existing ?? {
           id: null, user_id: userId, position: i,
-          title: `Bedna ${i + 1}`, category: '', items: [], color: '#ffffff', image_url: null,
+          title: `Bedna ${i + 1}`, category: '', items: [], color: '#ffffff',
           created_at: '', updated_at: '',
         }
       })

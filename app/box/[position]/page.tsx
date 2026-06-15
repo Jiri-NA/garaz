@@ -80,14 +80,6 @@ export default async function BoxPage({ params }: { params: Promise<{ position: 
               {box.title || `Bedna ${position + 1}`}
             </h1>
 
-            {box.image_url && (
-              <img
-                src={box.image_url}
-                alt="foto bedny"
-                style={{ width: '100%', height: 200, objectFit: 'cover', borderRadius: 8, marginBottom: 16, border: '1px solid #333' }}
-              />
-            )}
-
             {items.length > 0 ? (
               <div style={{ marginBottom: 16 }}>
                 <p style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-secondary)', marginBottom: 12 }}>

@@ -2,14 +2,13 @@
 
 import { useState, useRef } from 'react'
 import { GarazBox, BoxItem, CATEGORIES, BOX_COLORS } from '@/lib/types'
-import { compressImage } from '@/lib/compressImage'
 import ItemEditModal from './ItemEditModal'
 import { QRCodeCanvas } from 'qrcode.react'
 
 type Props = {
   box: GarazBox
   userId: string
-  onSave: (box: GarazBox, imageFile: File | null) => Promise<void>
+  onSave: (box: GarazBox) => Promise<void>
   onClose: () => void
 }
 
@@ -19,14 +18,11 @@ export default function BoxModal({ box, userId, onSave, onClose }: Props) {
   const [color, setColor] = useState(box.color)
   const [items, setItems] = useState<BoxItem[]>(box.items ?? [])
   const [newItem, setNewItem] = useState('')
-  const [imageFile, setImageFile] = useState<File | null>(null)
-  const [imagePreview, setImagePreview] = useState<string | null>(box.image_url)
   const [saving, setSaving] = useState(false)
   const [saveError, setSaveError] = useState<string | null>(null)
   const [editingItemIdx, setEditingItemIdx] = useState<number | null>(null)
   const [lightboxUrl, setLightboxUrl] = useState<string | null>(null)
   const [showQr, setShowQr] = useState(false)
-  const fileRef = useRef<HTMLInputElement>(null)
   const qrRef = useRef<HTMLDivElement>(null)
 
   function addItem() {
@@ -56,7 +52,7 @@ export default function BoxModal({ box, userId, onSave, onClose }: Props) {
     setSaving(true)
     setSaveError(null)
     try {
-      await onSave({ ...box, title, category, color, items: newItems }, imageFile)
+      await onSave({ ...box, title, category, color, items: newItems })
       console.log('[garaz] auto-save OK')
     } catch (err) {
       console.error('[garaz] auto-save FAIL:', err)
@@ -64,16 +60,6 @@ export default function BoxModal({ box, userId, onSave, onClose }: Props) {
     } finally {
       setSaving(false)
     }
-  }
-
-  async function handleImageChange(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0]
-    if (!file) return
-    const compressed = await compressImage(file)
-    setImageFile(compressed)
-    const reader = new FileReader()
-    reader.onload = ev => setImagePreview(ev.target?.result as string)
-    reader.readAsDataURL(compressed)
   }
 
   function downloadQr() {
@@ -89,7 +75,7 @@ export default function BoxModal({ box, userId, onSave, onClose }: Props) {
     setSaving(true)
     setSaveError(null)
     try {
-      await onSave({ ...box, title, category, color, items }, imageFile)
+      await onSave({ ...box, title, category, color, items })
     } catch (err) {
       setSaveError(err instanceof Error ? err.message : 'Nastala chyba při ukládání.')
     } finally {
@@ -180,25 +166,6 @@ export default function BoxModal({ box, userId, onSave, onClose }: Props) {
                 />
               ))}
             </div>
-          </div>
-
-          {/* Fotka */}
-          <div className="mb-5">
-            <label className="block text-sm font-semibold mb-1" style={{ color: 'var(--text-secondary)' }}>Fotografie</label>
-            {imagePreview && (
-              <div className="mb-2 relative">
-                <img src={imagePreview} alt="náhled" className="w-full h-36 object-cover rounded-lg" />
-                <button
-                  onClick={() => { setImagePreview(null); setImageFile(null) }}
-                  className="absolute top-1 right-1 text-white text-xs px-2 py-0.5 rounded" style={{ background: '#8b2020' }}
-                >Odstranit</button>
-              </div>
-            )}
-            <input ref={fileRef} type="file" accept="image/*" onChange={handleImageChange} className="hidden" />
-            <button
-              onClick={() => fileRef.current?.click()}
-              className="px-4 py-2 rounded-lg text-sm transition" style={{ background: '#1e1e1e', border: '1px solid #444', color: 'var(--text-secondary)' }}
-            >📷 {imagePreview ? 'Změnit fotku' : 'Přidat fotku'}</button>
           </div>
 
           {/* QR kód */}
